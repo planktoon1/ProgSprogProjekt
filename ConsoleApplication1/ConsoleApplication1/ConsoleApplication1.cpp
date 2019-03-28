@@ -14,12 +14,12 @@ class Board {
 		bool gameFinished = false;
 
 		// helper method for the "checkConnectedFour" method
-		void reset(bool list[], bool &won) {
+		void reset(bool list[], bool &gameFinished) {
 			int counter = 0;
 			for (int i = 0; i < 7; i++) {
 				if (list[i] == true) {
 					counter++;
-					if (counter == 4) { won = true; return; }
+					if (counter == 4) { gameFinished = true; return; }
 				}
 				else {
 					counter = 0;
@@ -166,9 +166,11 @@ class Board {
 				// Check vertical down
 				for (int i = 0; i < 4; i++) {
 					if (row + i <= 5) {
-						options[col][1][i] = gameBoard[col][row + i];
+						options[col][1][i+3] = gameBoard[col][row + i];
 					}
 				}
+
+
 
 				// Check diagonal right
 				for (int i = -3; i <= 3; i++) {
@@ -185,7 +187,6 @@ class Board {
 					}
 				}
 			}
-
 
 			// ----------------------------- Validate options -----------------------------
 			srand(time(NULL));
@@ -208,26 +209,29 @@ class Board {
 						if (options[dim1][dim2][dim3] == BoardOptions::player2) { // computer
 							computerCounter++;
 						}
-						else {
+						else { //Done counting 
 							if (computerCounter == 3) { // computer can win the game
 								choosenColumn = dim1 +1;
 								priority = 4;
-							} /*
-							else if (priority < computerCounter) { // computer can make 2 or 3 in a row
+							}  
+							else if ((dim3 == 3 || dim3 == 6) && computerCounter == 2 && priority < 2) { // Computer can make 3 in a row
 								choosenColumn = dim1 + 1;
-								priority = computerCounter;
-							}*/
+								priority = 2;
+							} else if ((dim3 == 3 || dim3 == 5) && computerCounter == 1 && priority < 1) { // Computer can make 2 in a row
+								choosenColumn = dim1 + 1;
+								priority = 1;
+							}
 							computerCounter = 0; // reset counter
 						}
 
 						if (options[dim1][dim2][dim3] == BoardOptions::player1) { // human 
 							humanCounter++;
-						}
-						else {
-							if (humanCounter == 3) { // Human can win, computer has to stop human
+							if (humanCounter == 3 && priority < 4) { // Human can win, computer has to stop human
 								choosenColumn = dim1 + 1;
 								priority = 3;
 							}
+						}
+						else {
 							humanCounter = 0;
 						}
 					}
@@ -256,6 +260,8 @@ class Board {
 
 			while (true) {
 				string input;
+				resetBoard();
+				drawBoard();
 				cout << " \n  Welcome to connected four. " << endl;
 				cout << "  Play against computer or against another player? Type 'c' for computer / 'p' for player" << endl;
 				cin >> input;
@@ -268,15 +274,14 @@ class Board {
 						if (regex_match(input, r))
 							insertPiece(stoi(input));
 						else if (input == "r") {
-							resetBoard();
-							drawBoard();
+							break;
 						}
 						else
 							cout << "Please enter number from 1-7" << endl;
 					}
 				}
 				else if (input == "c") { // Game against the computer
-					while (!gameFinished) {
+					while (true) {
 						cout << "What column do you wanna insert into? (type 'r' to reset game): ";
 						cin >> input;
 
@@ -284,14 +289,12 @@ class Board {
 						if (regex_match(input, r))
 							insertPiece(stoi(input));
 						else if (input == "r") {
-							resetBoard();
-							drawBoard();
-							continue;
+							break;
 						}
 						else
 							cout << "Please enter number from 1-7" << endl;
-
-						computerTakeTurn();
+						if (!gameFinished)
+							computerTakeTurn();
 					}
 				}
 				else {
